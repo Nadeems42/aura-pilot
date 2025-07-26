@@ -173,10 +173,21 @@ const Settings = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                  <SelectItem value="JPY">JPY (¥)</SelectItem>
+                  <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                  <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                  <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
+                  <SelectItem value="JPY">JPY (¥) - Japanese Yen</SelectItem>
+                  <SelectItem value="CAD">CAD (C$) - Canadian Dollar</SelectItem>
+                  <SelectItem value="AUD">AUD (A$) - Australian Dollar</SelectItem>
+                  <SelectItem value="CHF">CHF (Fr) - Swiss Franc</SelectItem>
+                  <SelectItem value="CNY">CNY (¥) - Chinese Yuan</SelectItem>
+                  <SelectItem value="INR">INR (₹) - Indian Rupee</SelectItem>
+                  <SelectItem value="KRW">KRW (₩) - South Korean Won</SelectItem>
+                  <SelectItem value="BRL">BRL (R$) - Brazilian Real</SelectItem>
+                  <SelectItem value="RUB">RUB (₽) - Russian Ruble</SelectItem>
+                  <SelectItem value="MXN">MXN ($) - Mexican Peso</SelectItem>
+                  <SelectItem value="SGD">SGD (S$) - Singapore Dollar</SelectItem>
+                  <SelectItem value="ZAR">ZAR (R) - South African Rand</SelectItem>
                 </SelectContent>
               </Select>
             </div>
