@@ -14,7 +14,207 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_insights: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          insight_type: string
+          is_read: boolean | null
+          priority: number | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          insight_type: string
+          is_read?: boolean | null
+          priority?: number | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          insight_type?: string
+          is_read?: boolean | null
+          priority?: number | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      health_entries: {
+        Row: {
+          created_at: string | null
+          date: string
+          exercise_minutes: number | null
+          exercise_type: string | null
+          id: string
+          mood: number | null
+          notes: string | null
+          sleep_hours: number | null
+          steps: number | null
+          updated_at: string | null
+          user_id: string
+          water_glasses: number | null
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          exercise_minutes?: number | null
+          exercise_type?: string | null
+          id?: string
+          mood?: number | null
+          notes?: string | null
+          sleep_hours?: number | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id: string
+          water_glasses?: number | null
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          exercise_minutes?: number | null
+          exercise_type?: string | null
+          id?: string
+          mood?: number | null
+          notes?: string | null
+          sleep_hours?: number | null
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string
+          water_glasses?: number | null
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          full_name: string | null
+          id: string
+          notifications_enabled: boolean | null
+          theme: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          full_name?: string | null
+          id?: string
+          notifications_enabled?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          full_name?: string | null
+          id?: string
+          notifications_enabled?: boolean | null
+          theme?: string | null
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          due_time: string | null
+          id: string
+          priority: string | null
+          recurring_type: string | null
+          streak_count: number | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          priority?: string | null
+          recurring_type?: string | null
+          streak_count?: number | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          due_time?: string | null
+          id?: string
+          priority?: string | null
+          recurring_type?: string | null
+          streak_count?: number | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
