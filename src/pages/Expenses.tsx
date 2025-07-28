@@ -17,40 +17,73 @@ import {
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useUserData } from "@/hooks/useUserData";
 
 const Expenses = () => {
+  const { expenses, userSettings, addExpense, loading } = useUserData();
   const [selectedCategory, setSelectedCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Mock data
-  const monthlyBudget = 2000;
-  const currentSpent = 1247.50;
-  const todaySpent = 47.50;
+  // Calculate real spending data
+  const monthlyBudget = userSettings?.monthly_expense_budget || 2000;
+  const currentSpent = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  const today = new Date().toISOString().split('T')[0];
+  const todaySpent = expenses
+    .filter(expense => expense.date === today)
+    .reduce((sum, expense) => sum + Number(expense.amount), 0);
 
-  const categories = [
-    { name: "Food & Dining", spent: 420, budget: 600, color: "bg-red-500", icon: "🍽️" },
-    { name: "Transportation", spent: 180, budget: 300, color: "bg-blue-500", icon: "🚗" },
-    { name: "Shopping", spent: 320, budget: 400, color: "bg-purple-500", icon: "🛒" },
-    { name: "Entertainment", spent: 150, budget: 200, color: "bg-green-500", icon: "🎬" },
-    { name: "Healthcare", spent: 90, budget: 150, color: "bg-yellow-500", icon: "⚕️" },
-    { name: "Utilities", spent: 87.50, budget: 350, color: "bg-orange-500", icon: "⚡" }
-  ];
+  // Calculate category breakdown from real data
+  const categoryNames = ["Food & Dining", "Transportation", "Shopping", "Entertainment", "Healthcare", "Utilities"];
+  const categoryIcons = {
+    "Food & Dining": "🍽️",
+    "Transportation": "🚗", 
+    "Shopping": "🛒",
+    "Entertainment": "🎬",
+    "Healthcare": "⚕️",
+    "Utilities": "⚡"
+  };
 
-  const recentTransactions = [
-    { id: 1, description: "Starbucks Coffee", amount: 5.50, category: "Food & Dining", date: "Today", time: "2:30 PM" },
-    { id: 2, description: "Uber Ride", amount: 12.00, category: "Transportation", date: "Today", time: "1:15 PM" },
-    { id: 3, description: "Lunch at Subway", amount: 8.99, category: "Food & Dining", date: "Today", time: "12:45 PM" },
-    { id: 4, description: "Amazon Purchase", amount: 45.99, category: "Shopping", date: "Yesterday", time: "6:20 PM" },
-    { id: 5, description: "Netflix Subscription", amount: 15.99, category: "Entertainment", date: "Yesterday", time: "3:10 PM" }
-  ];
+  const categories = categoryNames.map(name => {
+    const spent = expenses
+      .filter(expense => expense.category === name)
+      .reduce((sum, expense) => sum + Number(expense.amount), 0);
+    
+    return {
+      name,
+      spent,
+      budget: monthlyBudget / 6, // Evenly distribute budget across categories
+      color: "bg-primary",
+      icon: categoryIcons[name as keyof typeof categoryIcons] || "💰"
+    };
+  });
 
-  const handleAddExpense = () => {
-    // Handle expense addition logic here
-    console.log({ amount, category: selectedCategory, description });
-    setAmount("");
-    setSelectedCategory("");
-    setDescription("");
+  const recentTransactions = expenses.slice(0, 5).map(expense => ({
+    id: expense.id,
+    description: expense.description,
+    amount: Number(expense.amount),
+    category: expense.category,
+    date: expense.date === today ? "Today" : new Date(expense.date).toLocaleDateString(),
+    time: new Date(expense.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }));
+
+  const handleAddExpense = async () => {
+    if (!amount || !selectedCategory || !description) return;
+
+    const success = await addExpense({
+      amount: parseFloat(amount),
+      category: selectedCategory,
+      description,
+      date: today
+    });
+
+    if (success) {
+      setAmount("");
+      setSelectedCategory("");
+      setDescription("");
+      setIsDialogOpen(false);
+    }
   };
 
   return (
@@ -62,7 +95,7 @@ const Expenses = () => {
           <p className="text-muted-foreground">Manage your daily spending and budgets</p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-accent hover:scale-105 transition-all">
               <Plus className="w-4 h-4 mr-2" />
@@ -92,9 +125,9 @@ const Expenses = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.name} value={cat.name}>
-                        {cat.icon} {cat.name}
+                    {categoryNames.map((cat) => (
+                      <SelectItem key={cat} value={cat}>
+                        {categoryIcons[cat as keyof typeof categoryIcons]} {cat}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -146,8 +179,10 @@ const Expenses = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-accent">${todaySpent}</p>
-            <p className="text-sm text-muted-foreground">3 transactions</p>
+            <p className="text-2xl font-bold text-accent">${todaySpent.toFixed(2)}</p>
+            <p className="text-sm text-muted-foreground">
+              {expenses.filter(e => e.date === today).length} transactions
+            </p>
           </CardContent>
         </Card>
 

@@ -215,6 +215,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          daily_exercise_goal: number | null
+          daily_sleep_goal: number | null
+          daily_step_goal: number | null
+          daily_water_goal: number | null
+          id: string
+          monthly_expense_budget: number | null
+          reminder_frequency: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_exercise_goal?: number | null
+          daily_sleep_goal?: number | null
+          daily_step_goal?: number | null
+          daily_water_goal?: number | null
+          id?: string
+          monthly_expense_budget?: number | null
+          reminder_frequency?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_exercise_goal?: number | null
+          daily_sleep_goal?: number | null
+          daily_step_goal?: number | null
+          daily_water_goal?: number | null
+          id?: string
+          monthly_expense_budget?: number | null
+          reminder_frequency?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

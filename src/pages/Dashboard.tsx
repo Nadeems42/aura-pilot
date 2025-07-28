@@ -15,10 +15,16 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/dashboard-hero.jpg";
+import { useUserData } from "@/hooks/useUserData";
+import { useAIReminders } from "@/hooks/useAIReminders";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [timeOfDay, setTimeOfDay] = useState("");
+  const { tasks, expenses, healthEntries, userSettings, aiInsights, loading } = useUserData();
+  
+  // Initialize AI reminders
+  useAIReminders();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -36,11 +42,34 @@ const Dashboard = () => {
     return greetings[timeOfDay as keyof typeof greetings] || "Hello! 👋";
   };
 
-  // Mock data for today's summary
+  // Calculate real stats from user data
+  const today = new Date().toISOString().split('T')[0];
+  const todaysHealthEntry = healthEntries.find(entry => entry.date === today);
+  const todaysTasks = tasks.filter(task => 
+    task.due_date === 'Today' || 
+    (task.created_at && task.created_at.startsWith(today))
+  );
+  const completedTodayTasks = todaysTasks.filter(task => task.completed);
+  const todaysExpenses = expenses.filter(expense => expense.date === today);
+  const todayExpenseAmount = todaysExpenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+  
   const todayStats = {
-    expenses: { spent: 47.50, budget: 75, categories: 4 },
-    health: { steps: 6842, water: 6, sleep: 7.5, exercise: 45 },
-    tasks: { completed: 5, total: 8, streak: 12 }
+    expenses: { 
+      spent: todayExpenseAmount, 
+      budget: userSettings?.monthly_expense_budget ? userSettings.monthly_expense_budget / 30 : 75, 
+      categories: [...new Set(todaysExpenses.map(e => e.category))].length 
+    },
+    health: { 
+      steps: todaysHealthEntry?.steps || 0, 
+      water: todaysHealthEntry?.water_glasses || 0, 
+      sleep: todaysHealthEntry?.sleep_hours || 0, 
+      exercise: todaysHealthEntry?.exercise_minutes || 0 
+    },
+    tasks: { 
+      completed: completedTodayTasks.length, 
+      total: todaysTasks.length || 1, 
+      streak: 0 // Could be calculated based on task completion history
+    }
   };
 
   const quickActions = [
@@ -224,18 +253,30 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-              <h4 className="font-medium mb-2">💡 Spending Tip</h4>
-              <p className="text-sm opacity-90">
-                You're on track with your budget! Consider saving the extra $27.50 for tomorrow.
-              </p>
-            </div>
-            <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-              <h4 className="font-medium mb-2">🏃 Health Goal</h4>
-              <p className="text-sm opacity-90">
-                Great job on staying hydrated! Try adding a 15-minute evening walk to reach 8,000 steps.
-              </p>
-            </div>
+            {aiInsights.slice(0, 2).map((insight) => (
+              <div key={insight.id} className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                <h4 className="font-medium mb-2">{insight.title}</h4>
+                <p className="text-sm opacity-90">
+                  {insight.content}
+                </p>
+              </div>
+            ))}
+            {aiInsights.length === 0 && (
+              <>
+                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                  <h4 className="font-medium mb-2">🎯 Getting Started</h4>
+                  <p className="text-sm opacity-90">
+                    Welcome! Start by adding your first task or logging some health data to get personalized insights.
+                  </p>
+                </div>
+                <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
+                  <h4 className="font-medium mb-2">📊 Track Progress</h4>
+                  <p className="text-sm opacity-90">
+                    I'll help you track your wellness journey and provide smart recommendations based on your data.
+                  </p>
+                </div>
+              </>
+            )}
           </div>
           <Button 
             variant="secondary" 
@@ -251,22 +292,31 @@ const Dashboard = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-card p-4 text-center hover:scale-105 transition-transform">
           <TrendingUp className="w-6 h-6 text-primary mx-auto mb-2" />
-          <p className="text-2xl font-bold text-primary">12</p>
+          <p className="text-2xl font-bold text-primary">{todayStats.tasks.streak || 0}</p>
           <p className="text-sm text-muted-foreground">Day Streak</p>
         </Card>
         <Card className="bg-gradient-card p-4 text-center hover:scale-105 transition-transform">
           <DollarSign className="w-6 h-6 text-accent mx-auto mb-2" />
-          <p className="text-2xl font-bold text-accent">$1,247</p>
-          <p className="text-sm text-muted-foreground">This Month</p>
+          <p className="text-2xl font-bold text-accent">
+            ${expenses.reduce((sum, expense) => sum + Number(expense.amount), 0).toLocaleString()}
+          </p>
+          <p className="text-sm text-muted-foreground">Total Spent</p>
         </Card>
         <Card className="bg-gradient-card p-4 text-center hover:scale-105 transition-transform">
           <Heart className="w-6 h-6 text-secondary mx-auto mb-2" />
-          <p className="text-2xl font-bold text-secondary">85%</p>
+          <p className="text-2xl font-bold text-secondary">
+            {todaysHealthEntry ? Math.round((
+              (todaysHealthEntry.water_glasses / 8) * 25 +
+              (Math.min(todaysHealthEntry.steps, userSettings?.daily_step_goal || 8000) / (userSettings?.daily_step_goal || 8000)) * 25 +
+              (Math.min(todaysHealthEntry.exercise_minutes, userSettings?.daily_exercise_goal || 30) / (userSettings?.daily_exercise_goal || 30)) * 25 +
+              (Math.min(todaysHealthEntry.sleep_hours, userSettings?.daily_sleep_goal || 8) / (userSettings?.daily_sleep_goal || 8)) * 25
+            )) : 0}%
+          </p>
           <p className="text-sm text-muted-foreground">Health Score</p>
         </Card>
         <Card className="bg-gradient-card p-4 text-center hover:scale-105 transition-transform">
           <Target className="w-6 h-6 text-primary mx-auto mb-2" />
-          <p className="text-2xl font-bold text-primary">47</p>
+          <p className="text-2xl font-bold text-primary">{tasks.filter(task => task.completed).length}</p>
           <p className="text-sm text-muted-foreground">Tasks Done</p>
         </Card>
       </div>

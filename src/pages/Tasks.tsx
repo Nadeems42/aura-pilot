@@ -20,67 +20,52 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-interface Task {
-  id: number;
-  title: string;
-  description: string;
-  completed: boolean;
-  priority: "low" | "medium" | "high";
-  dueDate?: string;
-  category: string;
-}
+import { useUserData } from "@/hooks/useUserData";
 
 const Tasks = () => {
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, title: "Morning workout", description: "30 minutes cardio", completed: true, priority: "high", dueDate: "Today", category: "Health" },
-    { id: 2, title: "Review project proposal", description: "Check the latest updates", completed: true, priority: "medium", dueDate: "Today", category: "Work" },
-    { id: 3, title: "Buy groceries", description: "Milk, bread, fruits", completed: true, priority: "low", dueDate: "Today", category: "Personal" },
-    { id: 4, title: "Call dentist", description: "Schedule appointment", completed: false, priority: "medium", dueDate: "Today", category: "Health" },
-    { id: 5, title: "Finish presentation", description: "Complete slides for meeting", completed: false, priority: "high", dueDate: "Tomorrow", category: "Work" },
-    { id: 6, title: "Read for 30 minutes", description: "Continue current book", completed: false, priority: "low", dueDate: "Today", category: "Personal" },
-    { id: 7, title: "Plan weekend trip", description: "Research destinations", completed: false, priority: "low", dueDate: "This week", category: "Personal" },
-    { id: 8, title: "Update portfolio", description: "Add recent projects", completed: false, priority: "medium", dueDate: "This week", category: "Work" }
-  ]);
-
+  const { tasks, addTask, updateTask, deleteTask, loading } = useUserData();
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState("medium");
   const [newTaskCategory, setNewTaskCategory] = useState("Personal");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const toggleTask = (id: number) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+  const toggleTask = (id: string) => {
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      updateTask(id, { completed: !task.completed });
+    }
   };
 
-  const deleteTask = (id: number) => {
-    setTasks(tasks.filter(task => task.id !== id));
+  const handleDeleteTask = (id: string) => {
+    deleteTask(id);
   };
 
-  const addTask = () => {
+  const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
     
-    const newTask: Task = {
-      id: Math.max(...tasks.map(t => t.id)) + 1,
+    const success = await addTask({
       title: newTaskTitle,
       description: newTaskDescription,
       completed: false,
-      priority: newTaskPriority as "low" | "medium" | "high",
-      dueDate: "Today",
+      priority: newTaskPriority,
+      due_date: "Today",
       category: newTaskCategory
-    };
+    });
 
-    setTasks([...tasks, newTask]);
-    setNewTaskTitle("");
-    setNewTaskDescription("");
-    setNewTaskPriority("medium");
-    setNewTaskCategory("Personal");
+    if (success) {
+      setNewTaskTitle("");
+      setNewTaskDescription("");
+      setNewTaskPriority("medium");
+      setNewTaskCategory("Personal");
+      setIsDialogOpen(false);
+    }
   };
 
-  const completedToday = tasks.filter(task => task.completed && task.dueDate === "Today").length;
-  const totalToday = tasks.filter(task => task.dueDate === "Today").length;
-  const streak = 12; // Mock streak data
+  const todaysTasks = tasks.filter(task => task.due_date === "Today");
+  const completedToday = todaysTasks.filter(task => task.completed).length;
+  const totalToday = todaysTasks.length || 1;
+  const streak = 0; // Could implement streak calculation
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -111,7 +96,7 @@ const Tasks = () => {
           <p className="text-muted-foreground">Stay organized and productive</p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-gradient-primary hover:scale-105 transition-all">
               <Plus className="w-4 h-4 mr-2" />
@@ -172,7 +157,7 @@ const Tasks = () => {
                   </Select>
                 </div>
               </div>
-              <Button onClick={addTask} className="w-full bg-gradient-primary">
+              <Button onClick={handleAddTask} className="w-full bg-gradient-primary">
                 Create Task
               </Button>
             </div>
@@ -241,7 +226,7 @@ const Tasks = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {tasks.filter(task => task.dueDate === "Today").map((task) => (
+              {tasks.filter(task => task.due_date === "Today").map((task) => (
                 <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <Checkbox
                     checked={task.completed}
@@ -266,7 +251,7 @@ const Tasks = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteTask(task.id)}
+                    onClick={() => handleDeleteTask(task.id)}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -288,7 +273,7 @@ const Tasks = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {tasks.filter(task => task.dueDate !== "Today").map((task) => (
+              {tasks.filter(task => task.due_date !== "Today").map((task) => (
                 <div key={task.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                   <Checkbox
                     checked={task.completed}
@@ -308,13 +293,13 @@ const Tasks = () => {
                         {task.priority}
                       </Badge>
                       <Badge variant="secondary">{task.category}</Badge>
-                      <Badge variant="outline">{task.dueDate}</Badge>
+                      <Badge variant="outline">{task.due_date}</Badge>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteTask(task.id)}
+                    onClick={() => handleDeleteTask(task.id)}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="w-4 h-4" />
